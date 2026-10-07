@@ -49,7 +49,6 @@ class ProductoControl(private val repository: ProductoRepo) {
         }
     }
 
-
     @DeleteMapping("/{id}")
     fun eliminarProducto(@PathVariable id: Long): ResponseEntity<Void> {
         return if (repository.existsById(id)) {
@@ -58,5 +57,28 @@ class ProductoControl(private val repository: ProductoRepo) {
         } else {
             ResponseEntity(HttpStatus.NOT_FOUND)
         }
+    }
+
+    // Descontar Stock
+    @PutMapping("/{id}/descontar-stock")
+    fun descontarStock(
+        @PathVariable id: Long,
+        @RequestParam cantidad: Int
+    ): ResponseEntity<Any> {
+        val productoOpt = repository.findById(id)
+        if (!productoOpt.isPresent) {
+            return ResponseEntity.notFound().build()
+        }
+
+        val producto = productoOpt.get()
+
+        if (producto.stock < cantidad) {
+            return ResponseEntity.badRequest().body("Stock insuficiente")
+        }
+
+        producto.stock -= cantidad
+        repository.save(producto)
+
+        return ResponseEntity.ok(producto)
     }
 }
